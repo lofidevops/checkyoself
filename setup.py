@@ -1,11 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: Copyright 2020 David Seaward and contributors
 
-.coverage
-.idea
-.pytest_cache
-*.egg-info
-*~
-dist/
-build/
-__pycache__
+import setuptools
+
+setuptools.setup()

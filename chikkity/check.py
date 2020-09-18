@@ -1,4 +1,9 @@
-import apt
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: Copyright 2020 David Seaward and contributors
+
+# noinspection PyPackageRequirements
+import apt  # must be installed externally
+import click
 import os
 import shutil
 import parse
@@ -109,47 +114,57 @@ def get_domains_from_text(text):
         yield "http://" + result["domain"]
 
 
-# GET DOMAINS FROM APT SOURCES
+@click.command()
+def yo_self():
+    """
+    Before you wreck yo' self. Cause unknown sources are bad for your health.
 
-for element in get_deb_sources():
-    with open(element) as f:
-        for domain in get_domains_from_text(f.read()):
-            domains_append(domain, element.path)
+    Returns a list of online repositories that your system relies on. Verbose
+    mode additionally lists the software that uses them.
+    """
 
-# GET DOMAINS FROM FLATPAK SOURCES
+    # GET DOMAINS FROM APT SOURCES
 
-if shutil.which("flatpak") is not None:
-    result = subprocess.run(
-        ["flatpak", "remotes", "--show-details", "--show-disabled"], capture_output=True
-    )
-    for domain in get_domains_from_text(str(result.stdout)):
-        domains_append(domain, "flatpak")
+    for element in get_deb_sources():
+        with open(element) as f:
+            for domain in get_domains_from_text(f.read()):
+                domains_append(domain, element.path)
 
-# LOOK UP DOMAINS FOR RECOGNISED PACKAGES
+    # GET DOMAINS FROM FLATPAK SOURCES
 
-for name in get_packages():
-    for domain in PACKAGE_LIST[name]:
-        domains_append(domain, "apt:" + name)
+    if shutil.which("flatpak") is not None:
+        result = subprocess.run(
+            ["flatpak", "remotes", "--show-details", "--show-disabled"],
+            capture_output=True,
+        )
+        for domain in get_domains_from_text(str(result.stdout)):
+            domains_append(domain, "flatpak")
 
-# LOOK UP DOMAINS FOR RECOGNISED BINARIES
+    # LOOK UP DOMAINS FOR RECOGNISED PACKAGES
 
-for name in BIN_LIST.keys():
-    path = shutil.which(name)
-    if path is not None:
-        for domain in BIN_LIST[name]:
-            domains_append(domain, path.replace(HOME_FOLDER, "~"))
+    for name in get_packages():
+        for domain in PACKAGE_LIST[name]:
+            domains_append(domain, "apt:" + name)
 
-# LIST LOCAL INSTALLATIONS NOT IN LISTS
+    # LOOK UP DOMAINS FOR RECOGNISED BINARIES
 
-for path in [HOME_LOCAL_BIN, "/usr/local/bin"]:
-    for element in os.scandir(path):
-        if element.is_file(follow_symlinks=True):
+    for name in BIN_LIST.keys():
+        path = shutil.which(name)
+        if path is not None:
+            for domain in BIN_LIST[name]:
+                domains_append(domain, path.replace(HOME_FOLDER, "~"))
+
+    # LIST LOCAL INSTALLATIONS NOT IN LISTS
+
+    for path in [HOME_LOCAL_BIN, "/usr/local/bin"]:
+        for element in os.scandir(path):
+            if element.is_file(follow_symlinks=True):
+                if element.name not in BIN_LIST and element.name not in PACKAGE_LIST:
+                    domains_append("unknown", element.path.replace(HOME_FOLDER, "~"))
+
+    for element in os.scandir("/opt"):
+        if element.is_dir(follow_symlinks=False):
             if element.name not in BIN_LIST and element.name not in PACKAGE_LIST:
-                domains_append("unknown", element.path.replace(HOME_FOLDER, "~"))
+                domains_append("unknown", element.path)
 
-for element in os.scandir("/opt"):
-    if element.is_dir(follow_symlinks=False):
-        if element.name not in BIN_LIST and element.name not in PACKAGE_LIST:
-            domains_append("unknown", element.path)
-
-domains_print(verbose=True)
+    domains_print(verbose=True)

@@ -1,19 +1,24 @@
-# Check yo' self
+# Check yo' self (dibbity deb remix)
 
 Which online repositories does my system rely on?
-
-Returns a list of inferred repositories. Verbose mode
-additionally lists the installed software that uses them.
 
 ## Status
 
 Very early prototype.
 
-## Run (prototype)
+## Usage
 
-1. Copy `checkyoself.py`
-2. `apt install python3-parse`
-3. `python3 -m checkyoself`
+```
+Usage: checkyoself [OPTIONS]
+
+  Before you wreck yo' self. Cause unknown sources are bad for your health.
+
+  Returns a list of online repositories that your system relies on. Verbose
+  mode additionally lists the software that uses them.
+
+Options:
+  --help  Show this message and exit.
+```
 
 ## Sample output
 
@@ -74,12 +79,91 @@ These are the sources that might access the repositories:
   alerting the user at the time of installation: "foo relies on bar.com, do you
   want to install it? Y/N"
 
-## Sharing
+## Development environment
 
-Check yo' self <br />
+### Setup
+
+```
+git checkout https://gitlab.com/lofidevops/checkyoself.git
+cd checkyoself
+pipenv --site-packages  # see note 1
+PIP_IGNORE_INSTALLED=1 pipenv install -e . --dev  # see note 2
+pipenv shell
+```
+
+You can use a text editor, or any IDE that supports virtualenv / pipenv.
+
+For pipenv details see <https://pipenv.pypa.io/en/latest/>
+
+**Note 1:** We must access system packages (aka site packages) so that we can `import apt`.
+
+**Note 2:** ...but we prefer virtualenv packages to system packages. See
+<https://pipenv.pypa.io/en/latest/advanced/#working-with-platform-provided-python-components> for details.
+
+### Code quality
+
+All cleanup and validation tasks should succeed without error or modification.
+
+```
+# coding conventions
+black .
+# unit tests
+coverage run -m pytest
+# coverage report (don't let it drop, aim for 90+)
+coverage report > coverage.txt
+# licensing metadata
+reuse lint
+# confirm no changes have occurred
+git diff --exit-code
+```
+
+If all tasks pass, your changes are ready for submission. Otherwise you need
+to fix, commit and validate again.
+
+You can invoke these tasks in any CI/CD pipeline.
+
+### Build
+
+Build packages:
+
+```
+python setup.py sdist bdist_wheel
+```
+
+If everything works as expected you should end up with the files:
+
+* `dist/<name>-<version>-py3-none-any.whl`
+* `dist/<name>-<version>.tar.gz`
+
+You can now optionally upload to PyPI:
+
+```
+twine upload dist/*
+```
+
+You can invoke these tasks in any CI/CD pipeline, but be aware of your threat model and the
+security implications.
+
+## Sharing and contributions
+
+Check yo' self (dibbity deb remix) <br />
 <https://gitlab.com/lofidevops/checkyoself> <br />
 Copyright 2020 David Seaward and contributors <br />
-SPDX-License-Identifier: GPL-3.0+
+SPDX-License-Identifier: GPL-3.0-or-later
 
-Shared under GPLv3-or-later, see [COPYING.GPL.md](COPYING.GPL.md)
-for details. Contributions under the same terms are welcome.
+Shared under GPL-3.0-or-later. We adhere to the Contributor Covenant
+2.0 without modification, and certify origin per DCO 1.1 with a
+signed-off-by line (`git -s`). Contributions under the same terms
+are welcome.
+
+For details see:
+
+* [GPL-3.0-or-later.txt], full license text
+* [CODE_OF_CONDUCT.md], full conduct text (report via a private ticket)
+* [CONTRIBUTING.DCO.txt], full origin text
+
+<!-- Links -->
+
+[GPL-3.0-or-later.txt]: LICENSES/GPL-3.0-or-later.txt
+[CODE_OF_CONDUCT.md]: CODE_OF_CONDUCT.md
+[CONTRIBUTING.DCO.txt]: CONTRIBUTING.DCO.txt
